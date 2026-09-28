@@ -1,0 +1,29 @@
+name: 问题反馈
+description: 报告 MisakaFetch 使用问题
+body:
+  - type: input
+    id: version
+    attributes:
+      label: 应用版本
+      placeholder: '1.0.0'
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: 系统与设备
+      placeholder: Windows 11 x64 或 Android 版本及手机型号
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 描述操作、预期结果和实际结果；勿填写密码或签名材料。
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 错误提示或截图
+      description: 可选；请先移除个人文件路径、账号和私人图片。
