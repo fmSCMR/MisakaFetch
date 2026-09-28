@@ -1,8 +1,6 @@
 # MisakaFetch
 
-Bilibili video cover extractor built with Flutter for Windows and Android.
-
-简洁的 Bilibili 视频封面提取器，使用 Flutter / Dart 开发，Windows 与 Android 共用界面、解析和网络代码。
+MisakaFetch 是一款简洁的 Bilibili 视频封面提取器，使用 Flutter / Dart 开发，支持 Windows 和 Android，两平台共用界面、解析和网络代码。
 
 粘贴视频链接、BV 号或分享文本，查看公开视频信息和封面，再保存原始图片或复制图片链接。应用直接请求 Bilibili 公开信息和图片 CDN，无需登录或自建服务器。
 
