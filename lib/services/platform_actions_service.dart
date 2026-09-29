@@ -11,7 +11,7 @@ class PlatformActionException implements Exception {
 }
 
 class PlatformActionsService {
-  static const projectUrl = 'https://github.com/gfang6530-gif/MisakaFetch';
+  static const projectUrl = 'https://github.com/fmSCMR/MisakaFetch';
 
   Future<void> openProject() async {
     try {

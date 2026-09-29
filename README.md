@@ -44,7 +44,7 @@ https://www.bilibili.com/video/BV1Q541167Qg/
 
 Windows 压缩包需完整解压，保留 DLL 和 data 目录后运行 MisakaFetch.exe。Android 10+ 在文件管理器的 Pictures/MisakaFetch 或系统相册查看图片；Android 7–9 保存到系统选择器指定的位置。视频及封面是否可访问取决于公开返回结果。
 
-克隆仓库后，包含 `pubspec.yaml`、`lib/` 和 `android/` 的目录就是项目根目录；本文所有开发命令均在该目录执行。普通用户请在仓库 [Releases](https://github.com/gfang6530-gif/MisakaFetch/releases) 下载 Windows ZIP 或 Android APK。Windows ZIP 完整解压后进入 Windows 文件夹运行 MisakaFetch.exe。
+克隆仓库后，包含 `pubspec.yaml`、`lib/` 和 `android/` 的目录就是项目根目录；本文所有开发命令均在该目录执行。普通用户请在仓库 [Releases](https://github.com/fmSCMR/MisakaFetch/releases) 下载 Windows ZIP 或 Android APK。Windows ZIP 完整解压后进入 Windows 文件夹运行 MisakaFetch.exe。
 
 ## 截图
 
@@ -203,4 +203,4 @@ Windows 写入用户选择的路径；Android 10+ 只创建应用自己的媒体
 
 ## 问题反馈
 
-请通过 [Issues](https://github.com/gfang6530-gif/MisakaFetch/issues) 提交问题，包含版本、平台和复现步骤。反馈前移除图片或日志中的个人信息。发布说明见 [V1.0.0](docs/release-notes-1.0.0.md)。
+请通过 [Issues](https://github.com/fmSCMR/MisakaFetch/issues) 提交问题，包含版本、平台和复现步骤。反馈前移除图片或日志中的个人信息。发布说明见 [V1.0.0](docs/release-notes-1.0.0.md)。
