@@ -1,3 +1,7 @@
+import 'package:misaka_fetch/utils/background_blur_scale.dart';
+
+import 'pump_app.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -68,7 +72,8 @@ void main() {
         controller.dispose();
         await root.delete(recursive: true);
       });
-      await tester.pumpWidget(
+      await pumpExtractionApp(
+        tester,
         MisakaFetchApp(
           settingsController: controller,
           backgroundService: service,
@@ -100,6 +105,10 @@ void main() {
         expect(
           tester
               .widgetList<Slider>(find.byType(Slider))
+              .where(
+                (slider) =>
+                    slider.key?.toString().contains('background') ?? false,
+              )
               .every((slider) => slider.onChanged == null),
           isTrue,
         );
@@ -107,7 +116,7 @@ void main() {
         expect(find.textContaining('未能保存'), findsWidgets);
       }
       expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox.shrink());
+      await pumpExtractionApp(tester, const SizedBox.shrink());
     });
   }
   testWidgets('滑块实时更新并保存最终值；恢复参数保留背景图片', (tester) async {
@@ -137,7 +146,10 @@ void main() {
       controller.settings.copyWith(backgroundEnabled: false),
       persist: false,
     );
-    await tester.pumpWidget(MisakaFetchApp(settingsController: controller));
+    await pumpExtractionApp(
+      tester,
+      MisakaFetchApp(settingsController: controller),
+    );
     await tester.runAsync(
       () => precacheImage(
         ResizeImage(FileImage(File(imagePath)), width: 1920),
@@ -167,17 +179,38 @@ void main() {
       controller.settings.backgroundBrightness,
     );
     expect(restored.backgroundOverlay, controller.settings.backgroundOverlay);
-    expect(restored.backgroundBlur, isNot(10));
+    expect(restored.backgroundBlur, isNot(0));
+    final blurFinder = find.byKey(const Key('backgroundBlurSlider'));
+    await tester.ensureVisible(blurFinder);
+    await tester.pumpAndSettle();
+    var blurSlider = tester.widget<Slider>(blurFinder);
+    expect(blurSlider.max, 1);
+    expect(blurSlider.divisions, 300);
+    for (final blur in [.5, .51, 1.0, 5.0, 7.0, 30.0]) {
+      final position = BackgroundBlurScale.toPosition(blur);
+      blurSlider = tester.widget<Slider>(blurFinder);
+      blurSlider.onChanged!(position);
+      blurSlider.onChangeEnd!(position);
+      await tester.pumpAndSettle();
+      expect(controller.settings.backgroundBlur, closeTo(blur, .0001));
+      expect(tester.widget<Slider>(blurFinder).value, closeTo(position, .0001));
+      expect(find.text('背景模糊 · ${blur.toStringAsFixed(2)}'), findsOneWidget);
+      expect(
+        AppSettings.fromJson(jsonDecode(stored!) as Map<String, dynamic>)
+            .backgroundBlur,
+        closeTo(blur, .0001),
+      );
+    }
     await tester.ensureVisible(find.text('恢复默认背景设置'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('恢复默认背景设置'));
     await tester.pumpAndSettle();
     expect(controller.settings.backgroundImage, imagePath);
-    expect(controller.settings.backgroundBlur, 10);
+    expect(controller.settings.backgroundBlur, 0);
     expect(controller.settings.backgroundBrightness, 1);
     expect(controller.settings.backgroundOverlay, .35);
     expect(controller.settings.backgroundFit, BackgroundFit.cover);
     expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox.shrink());
+    await pumpExtractionApp(tester, const SizedBox.shrink());
   });
 }

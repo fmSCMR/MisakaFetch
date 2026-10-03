@@ -1,3 +1,5 @@
+import 'pump_app.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -91,7 +93,8 @@ void main() {
   }) async {
     final videos = _Videos(fetchVideo ?? (_) async => _video);
     final images = _Images(fetchImage ?? (_) async => _image);
-    await tester.pumpWidget(
+    await pumpExtractionApp(
+      tester,
       MisakaFetchApp(
         actionsService: actions,
         settingsController: SettingsController(
@@ -124,6 +127,36 @@ void main() {
     await tester.tap(find.byKey(const Key('extractButton')));
     await tester.pumpAndSettle();
   }
+
+  testWidgets('收起、展开及跨窄窗口布局后保留输入结果，不重复请求', (tester) async {
+    final (videos, images) = await start(tester);
+    await extract(tester);
+    expect(find.text(_video.title), findsOneWidget);
+    await tester.tap(find.byKey(const Key('extractionTab')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('videoInput')), findsNothing);
+    expect(find.byKey(const Key('appTitleCard')), findsOneWidget);
+    expect(find.text('Bilibili 视频封面提取器'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('extractionTab')));
+    await tester.pumpAndSettle();
+    expect(find.text(_video.title), findsOneWidget);
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpAndSettle();
+    expect(find.text(_video.title), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('videoInput')))
+          .controller!
+          .text,
+      _video.bvid,
+    );
+    expect(videos.calls, 1);
+    expect(images.calls, 1);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('保存使用现有原图且防止重复点击', (tester) async {
     final done = Completer<String?>();
@@ -345,7 +378,7 @@ void main() {
     await tester.tap(find.byKey(const Key('saveImageButton')));
     await tester.pump();
     expect(saver.calls, 1);
-    await tester.pumpWidget(const SizedBox());
+    await pumpExtractionApp(tester, const SizedBox());
     pending.complete('saved.png');
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
@@ -456,7 +489,7 @@ void main() {
     await tester.enterText(find.byKey(const Key('videoInput')), _video.bvid);
     await tester.tap(find.byKey(const Key('extractButton')));
     await tester.pump();
-    await tester.pumpWidget(const SizedBox());
+    await pumpExtractionApp(tester, const SizedBox());
     pending.complete(_video);
     await tester.pumpAndSettle();
     expect(videos.closed, isTrue);

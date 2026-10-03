@@ -1,3 +1,5 @@
+import 'pump_app.dart';
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -21,7 +23,10 @@ void main() {
           initialSettings: AppSettings(themeMode: mode),
         );
         addTearDown(controller.dispose);
-        await tester.pumpWidget(MisakaFetchApp(settingsController: controller));
+        await pumpExtractionApp(
+          tester,
+          MisakaFetchApp(settingsController: controller),
+        );
         expect(
           Theme.of(tester.element(find.byKey(const Key('videoInput'))))
               .brightness,
@@ -39,21 +44,21 @@ void main() {
     );
     final first = SettingsController(repository: repository);
     addTearDown(first.dispose);
-    await tester.pumpWidget(MisakaFetchApp(settingsController: first));
+    await pumpExtractionApp(tester, MisakaFetchApp(settingsController: first));
     await tester.tap(find.byTooltip('选择主题'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('深色模式').last);
     await tester.pumpAndSettle();
     await first.pendingWrites;
     expect((jsonDecode(stored!) as Map)['themeMode'], 'dark');
-    await tester.pumpWidget(const SizedBox.shrink());
+    await pumpExtractionApp(tester, const SizedBox.shrink());
     final loaded = await repository.load();
     final second = SettingsController(
       repository: repository,
       initialSettings: loaded.settings,
     );
     addTearDown(second.dispose);
-    await tester.pumpWidget(MisakaFetchApp(settingsController: second));
+    await pumpExtractionApp(tester, MisakaFetchApp(settingsController: second));
     expect(
       Theme.of(tester.element(find.byKey(const Key('videoInput')))).brightness,
       Brightness.dark,
@@ -68,7 +73,10 @@ void main() {
       initialWarning: '未能读取上次设置，本次已使用默认设置。',
     );
     addTearDown(controller.dispose);
-    await tester.pumpWidget(MisakaFetchApp(settingsController: controller));
+    await pumpExtractionApp(
+      tester,
+      MisakaFetchApp(settingsController: controller),
+    );
     await tester.pump();
     expect(find.text('未能读取上次设置，本次已使用默认设置。'), findsOneWidget);
     expect(find.byKey(const Key('videoInput')), findsOneWidget);

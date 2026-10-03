@@ -18,7 +18,11 @@ class AppBackground extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        ColoredBox(color: colors.surface),
+        ColoredBox(
+          color: settings.backgroundEnabled && path != null
+              ? Colors.black
+              : colors.surface,
+        ),
         if (settings.backgroundEnabled && path != null)
           Positioned.fill(
             child: ExcludeSemantics(
@@ -71,7 +75,8 @@ class AppBackground extends StatelessWidget {
           Positioned.fill(
             child: IgnorePointer(
               child: ColoredBox(
-                color: colors.surface.withValues(
+                key: const Key('backgroundOverlay'),
+                color: Colors.black.withValues(
                   alpha: settings.backgroundOverlay,
                 ),
               ),

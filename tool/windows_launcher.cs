@@ -2,16 +2,20 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 [assembly: AssemblyTitle("MisakaFetch 启动器")]
 [assembly: AssemblyProduct("MisakaFetch")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0")]
-[assembly: AssemblyInformationalVersion("1.0.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0")]
+[assembly: AssemblyInformationalVersion("1.1.0")]
 
 internal static class WindowsLauncher
 {
+    [DllImport("user32.dll")]
+    private static extern bool AllowSetForegroundWindow(int processId);
+
     [STAThread]
     private static void Main()
     {
@@ -33,10 +37,16 @@ internal static class WindowsLauncher
 
             try
             {
-                Process.Start(new ProcessStartInfo(executable) {
+                Process process = Process.Start(new ProcessStartInfo(executable) {
                     WorkingDirectory = directory,
                     UseShellExecute = false
                 });
+                // Pass on foreground permission from a user-launched entry point.
+                if (process != null)
+                {
+                    AllowSetForegroundWindow(process.Id);
+                    process.Dispose();
+                }
             }
             catch (Exception)
             {

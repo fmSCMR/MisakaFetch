@@ -5,7 +5,8 @@ import 'dart:ui' as ui;
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
+
+import 'app_storage_service.dart';
 
 class BackgroundImageException implements Exception {
   const BackgroundImageException(this.message);
@@ -18,7 +19,8 @@ class BackgroundImageService {
   BackgroundImageService({
     Future<Directory> Function()? supportDirectory,
     Future<XFile?> Function()? picker,
-  }) : _supportDirectory = supportDirectory ?? getApplicationSupportDirectory,
+  }) : _supportDirectory =
+           supportDirectory ?? AppStorageService.supportDirectory,
        _picker = picker ?? _pick;
 
   final Future<Directory> Function() _supportDirectory;

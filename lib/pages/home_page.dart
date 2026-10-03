@@ -25,6 +25,7 @@ class HomePage extends StatefulWidget {
     this.onOpenSettings,
     this.settings = const AppSettings(),
     this.actionsService,
+    this.extractionVisible = true,
   });
   final BilibiliService? videoService;
   final ImageDownloadService? imageService;
@@ -34,6 +35,7 @@ class HomePage extends StatefulWidget {
   final VoidCallback? onOpenSettings;
   final AppSettings settings;
   final PlatformActionsService? actionsService;
+  final bool extractionVisible;
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -250,8 +252,9 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Material(
-                    color: theme.colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(16),
+                    key: const Key('appTitleCard'),
+                    color: theme.cardTheme.color,
+                    shape: theme.cardTheme.shape,
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: Row(
@@ -304,117 +307,147 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28),
-                  Card(
-                    margin: EdgeInsets.zero,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          TextField(
-                            key: const Key('videoInput'),
-                            controller: _input,
-                            enabled: !_busy,
-                            minLines: 2,
-                            maxLines: 4,
-                            keyboardType: TextInputType.multiline,
-                            decoration: InputDecoration(
-                              labelText: 'Bilibili 链接 / BV 号',
-                              hintText: '粘贴视频链接、BV 号或分享文本',
-                              alignLabelWithHint: true,
-                              suffixIcon: IconButton(
-                                tooltip: '清空输入',
-                                onPressed: _busy ? null : _input.clear,
-                                icon: const Icon(Icons.close),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          FilledButton.icon(
-                            key: const Key('extractButton'),
-                            onPressed: _busy ? null : _extract,
-                            icon: _extracting || _downloading
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.image_search_outlined),
-                            label: Text(
-                              _extracting || _downloading ? '正在提取…' : '提取封面',
-                            ),
-                          ),
-                          if (_error != null) ...[
-                            const SizedBox(height: 16),
-                            Semantics(
-                              liveRegion: true,
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.errorContainer,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                  Offstage(
+                    offstage: !widget.extractionVisible,
+                    child: TickerMode(
+                      enabled: widget.extractionVisible,
+                      child: ExcludeFocus(
+                        excluding: !widget.extractionVisible,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 28),
+                            Card(
+                              margin: EdgeInsets.zero,
+                              child: Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      color: theme.colorScheme.onErrorContainer,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        _error!,
-                                        style: TextStyle(
-                                          color: theme
-                                              .colorScheme
-                                              .onErrorContainer,
+                                    TextField(
+                                      key: const Key('videoInput'),
+                                      controller: _input,
+                                      enabled: !_busy,
+                                      minLines: 2,
+                                      maxLines: 4,
+                                      keyboardType: TextInputType.multiline,
+                                      decoration: InputDecoration(
+                                        labelText: 'Bilibili 链接 / BV 号',
+                                        hintText: '粘贴视频链接、BV 号或分享文本',
+                                        alignLabelWithHint: true,
+                                        suffixIcon: IconButton(
+                                          tooltip: '清空输入',
+                                          onPressed: _busy
+                                              ? null
+                                              : _input.clear,
+                                          icon: const Icon(Icons.close),
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(height: 16),
+                                    FilledButton.icon(
+                                      key: const Key('extractButton'),
+                                      onPressed: _busy ? null : _extract,
+                                      icon: _extracting || _downloading
+                                          ? const SizedBox(
+                                              width: 18,
+                                              height: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : const Icon(
+                                              Icons.image_search_outlined,
+                                            ),
+                                      label: Text(
+                                        _extracting || _downloading
+                                            ? '正在提取…'
+                                            : '提取封面',
+                                      ),
+                                    ),
+                                    if (_error != null) ...[
+                                      const SizedBox(height: 16),
+                                      Semantics(
+                                        liveRegion: true,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: theme
+                                                .colorScheme
+                                                .errorContainer,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Icon(
+                                                Icons.error_outline,
+                                                color: theme
+                                                    .colorScheme
+                                                    .onErrorContainer,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Text(
+                                                  _error!,
+                                                  style: TextStyle(
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onErrorContainer,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 20),
+                            if (video != null)
+                              VideoResultCard(
+                                video: video,
+                                image: _image,
+                                isLoading: _downloading,
+                                errorText: _coverError,
+                                onRetry: _busy ? null : () => _loadCover(video),
+                                onCopy: _copying ? null : _copyLink,
+                                isSaving: _saving,
+                                onSave:
+                                    !_busy &&
+                                        _image != null &&
+                                        _saveService.isSupported
+                                    ? _saveImage
+                                    : null,
+                              )
+                            else if (!_busy && _error == null)
+                              Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 24,
+                                    horizontal: 12,
+                                  ),
+                                  child: Text(
+                                    '输入一个视频链接，获取它的原始封面。',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                              ),
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  if (video != null)
-                    VideoResultCard(
-                      video: video,
-                      image: _image,
-                      isLoading: _downloading,
-                      errorText: _coverError,
-                      onRetry: _busy ? null : () => _loadCover(video),
-                      onCopy: _copying ? null : _copyLink,
-                      isSaving: _saving,
-                      onSave:
-                          !_busy && _image != null && _saveService.isSupported
-                          ? _saveImage
-                          : null,
-                    )
-                  else if (!_busy && _error == null)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 24,
-                          horizontal: 12,
-                        ),
-                        child: Text(
-                          '输入一个视频链接，获取它的原始封面。',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),

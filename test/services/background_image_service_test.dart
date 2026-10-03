@@ -10,6 +10,31 @@ final _png = base64Decode(
 );
 
 void main() {
+  testWidgets('不同副本的背景独立，替换或移除不影响另一副本', (tester) async {
+    await tester.runAsync(() async {
+      final root = await Directory.systemTemp.createTemp('misaka-bg-profiles-');
+      try {
+        final personal = BackgroundImageService(
+          supportDirectory: () async =>
+              Directory.fromUri(root.uri.resolve('personal/')),
+          picker: () async => XFile.fromData(_png, name: 'personal.png'),
+        );
+        final development = BackgroundImageService(
+          supportDirectory: () async =>
+              Directory.fromUri(root.uri.resolve('development/')),
+          picker: () async => XFile.fromData(_png, name: 'development.png'),
+        );
+        final personalImage = (await personal.chooseAndImport())!;
+        final developmentImage = (await development.chooseAndImport())!;
+        expect(await development.isUsable(personalImage), isFalse);
+        expect(await development.remove(personalImage), isFalse);
+        expect(await development.remove(developmentImage), isTrue);
+        expect(await personal.isUsable(personalImage), isTrue);
+      } finally {
+        await root.delete(recursive: true);
+      }
+    });
+  });
   testWidgets('导入副本不依赖原图，重启服务仍可读；移除不会删除原图', (tester) async {
     await tester.runAsync(() async {
       final root = await Directory.systemTemp.createTemp(

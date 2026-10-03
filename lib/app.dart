@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'controllers/settings_controller.dart';
 import 'pages/home_page.dart';
 import 'pages/settings_page.dart';
+import 'pages/workspace_page.dart';
 import 'services/background_image_service.dart';
 import 'services/platform_actions_service.dart';
 import 'widgets/app_background.dart';
@@ -98,10 +99,23 @@ class _MisakaFetchAppState extends State<MisakaFetchApp> {
       colorScheme: colors,
       cardTheme: CardThemeData(
         elevation: 0,
-        color: colors.surfaceContainerLow,
+        surfaceTintColor: Colors.transparent,
+        color:
+            (_settings.settings.cardColor == null
+                    ? colors.surfaceContainerLow
+                    : Color(0xFF000000 | _settings.settings.cardColor!))
+                .withValues(alpha: _settings.settings.cardOpacity),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: colors.outlineVariant),
+          side: BorderSide(
+            color:
+                (_settings.settings.cardBorderColor == null
+                        ? colors.outlineVariant
+                        : Color(
+                            0xFF000000 | _settings.settings.cardBorderColor!,
+                          ))
+                    .withValues(alpha: _settings.settings.cardBorderOpacity),
+          ),
         ),
       ),
       inputDecorationTheme: const InputDecorationTheme(
@@ -155,23 +169,21 @@ class _MisakaFetchAppState extends State<MisakaFetchApp> {
       child: child ?? const SizedBox.shrink(),
     ),
     home: Builder(
-      builder: (context) => HomePage(
-        videoService: widget.videoService,
-        imageService: widget.imageService,
-        saveService: widget.saveService,
-        settings: _settings.settings,
-        actionsService: widget.actionsService,
-        themeMode: _settings.settings.themeMode,
-        onThemeChanged: (mode) => _settings.setThemeMode(mode),
+      builder: (context) => WorkspacePage(
+        extractionPageBuilder: (visible) => HomePage(
+          extractionVisible: visible,
+          videoService: widget.videoService,
+          imageService: widget.imageService,
+          saveService: widget.saveService,
+          settings: _settings.settings,
+          actionsService: widget.actionsService,
+          themeMode: _settings.settings.themeMode,
+          onThemeChanged: (mode) => _settings.setThemeMode(mode),
+        ),
         onOpenSettings: () {
           Navigator.of(context).push(
-            PageRouteBuilder<void>(
-              transitionDuration: _settings.settings.animationsEnabled
-                  ? const Duration(milliseconds: 180)
-                  : Duration.zero,
-              reverseTransitionDuration: _settings.settings.animationsEnabled
-                  ? const Duration(milliseconds: 180)
-                  : Duration.zero,
+            _SettingsRoute(
+              settingsController: _settings,
               pageBuilder: (context, animation, secondaryAnimation) =>
                   SettingsPage(
                     controller: _settings,
@@ -179,12 +191,40 @@ class _MisakaFetchAppState extends State<MisakaFetchApp> {
                     actionsService: widget.actionsService,
                     loadVersion: widget.loadVersion,
                   ),
-              transitionsBuilder: (_, animation, secondaryAnimation, child) =>
-                  FadeTransition(opacity: animation, child: child),
             ),
           );
         },
       ),
     ),
   );
+}
+
+// 返回时读取最新设置，而不是沿用进入设置页时的开关状态。
+class _SettingsRoute extends PageRouteBuilder<void> {
+  _SettingsRoute({required this.settingsController, required super.pageBuilder})
+    : super(
+        transitionDuration: settingsController.settings.animationsEnabled
+            ? const Duration(milliseconds: 180)
+            : Duration.zero,
+        reverseTransitionDuration: settingsController.settings.animationsEnabled
+            ? const Duration(milliseconds: 180)
+            : Duration.zero,
+        transitionsBuilder: (_, animation, secondaryAnimation, child) =>
+            ListenableBuilder(
+              listenable: settingsController,
+              builder: (_, _) => settingsController.settings.animationsEnabled
+                  ? FadeTransition(opacity: animation, child: child)
+                  : child,
+            ),
+      );
+
+  final SettingsController settingsController;
+
+  @override
+  bool didPop(void result) {
+    controller?.reverseDuration = settingsController.settings.animationsEnabled
+        ? const Duration(milliseconds: 180)
+        : Duration.zero;
+    return super.didPop(result);
+  }
 }

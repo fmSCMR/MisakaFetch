@@ -10,6 +10,8 @@ import '../services/background_image_service.dart';
 import '../services/platform_actions_service.dart';
 import '../services/app_info_service.dart';
 import '../widgets/app_background.dart';
+import '../utils/background_blur_scale.dart';
+import '../widgets/card_appearance_controls.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({
@@ -374,15 +376,18 @@ class _SettingsPageState extends State<SettingsPage> {
     required double max,
     required bool enabled,
     required AppSettings Function(double) change,
+    int divisions = 60,
+    Key? sliderKey,
   }) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       Text('$label · $valueLabel'),
       Slider(
+        key: sliderKey,
         value: value,
         min: min,
         max: max,
-        divisions: 60,
+        divisions: divisions,
         semanticFormatterCallback: (_) => valueLabel,
         onChanged: enabled
             ? (value) {
@@ -406,222 +411,258 @@ class _SettingsPageState extends State<SettingsPage> {
       final windows = Theme.of(context).platform == TargetPlatform.windows;
       final hasImage = settings.backgroundImage != null;
       final editable = hasImage && settings.backgroundEnabled && !_busy;
-      return PopScope(
-        canPop: !_busy,
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(title: const Text('设置')),
-          body: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 860),
-              child: ListView(
-                key: const Key('settingsList'),
-                padding: EdgeInsets.fromLTRB(
-                  20,
-                  20,
-                  20,
-                  20 + MediaQuery.paddingOf(context).bottom,
-                ),
-                children: [
-                  _section('外观', [
-                    DropdownButtonFormField<ThemeMode>(
-                      key: ValueKey(settings.themeMode),
-                      initialValue: settings.themeMode,
-                      decoration: const InputDecoration(labelText: '主题模式'),
-                      isExpanded: true,
-                      items: const [
-                        DropdownMenuItem(
-                          value: ThemeMode.system,
-                          child: Text('跟随系统'),
-                        ),
-                        DropdownMenuItem(
-                          value: ThemeMode.light,
-                          child: Text('浅色模式'),
-                        ),
-                        DropdownMenuItem(
-                          value: ThemeMode.dark,
-                          child: Text('深色模式'),
-                        ),
-                      ],
-                      onChanged: (mode) {
-                        if (mode != null) widget.controller.setThemeMode(mode);
-                      },
-                    ),
-                  ]),
-                  _section('背景', [
-                    SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('自定义背景'),
-                      subtitle: Text(
-                        hasImage
-                            ? (settings.backgroundEnabled ? '已启用' : '已停用')
-                            : '尚未选择图片',
-                      ),
-                      value: settings.backgroundEnabled,
-                      onChanged: hasImage && !_busy
-                          ? (enabled) {
-                              widget.controller.update(
-                                _settings.copyWith(backgroundEnabled: enabled),
-                              );
-                            }
-                          : null,
-                    ),
-                    if (hasImage) ...[
-                      const SizedBox(height: 12),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: SizedBox(
-                          height: 140,
-                          child: AppBackground(
-                            settings: settings,
-                            child: const SizedBox.expand(),
+      final theme = Theme.of(context);
+      final colors = theme.colorScheme;
+      return Theme(
+        data: theme.copyWith(
+          cardTheme: CardThemeData(
+            elevation: 0,
+            surfaceTintColor: Colors.transparent,
+            color: colors.surfaceContainerLow,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(color: colors.outlineVariant),
+            ),
+          ),
+        ),
+        child: PopScope(
+          canPop: !_busy,
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(title: const Text('设置')),
+            body: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 860),
+                child: ListView(
+                  key: const Key('settingsList'),
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    20,
+                    20,
+                    20 + MediaQuery.paddingOf(context).bottom,
+                  ),
+                  children: [
+                    _section('外观', [
+                      DropdownButtonFormField<ThemeMode>(
+                        key: ValueKey(settings.themeMode),
+                        initialValue: settings.themeMode,
+                        decoration: const InputDecoration(labelText: '主题模式'),
+                        isExpanded: true,
+                        items: const [
+                          DropdownMenuItem(
+                            value: ThemeMode.system,
+                            child: Text('跟随系统'),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '背景效果预览',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        FilledButton.tonalIcon(
-                          key: const Key('chooseBackground'),
-                          onPressed: _busy ? null : _choose,
-                          icon: const Icon(Icons.add_photo_alternate_outlined),
-                          label: Text(hasImage ? '更换图片' : '选择图片'),
-                        ),
-                        if (hasImage)
-                          OutlinedButton.icon(
-                            key: const Key('removeBackground'),
-                            onPressed: _busy ? null : () => _remove(),
-                            icon: const Icon(Icons.delete_outline),
-                            label: const Text('移除背景'),
+                          DropdownMenuItem(
+                            value: ThemeMode.light,
+                            child: Text('浅色模式'),
                           ),
-                      ],
-                    ),
-                    if (_busy)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: LinearProgressIndicator(),
+                          DropdownMenuItem(
+                            value: ThemeMode.dark,
+                            child: Text('深色模式'),
+                          ),
+                        ],
+                        onChanged: (mode) {
+                          if (mode != null) {
+                            widget.controller.setThemeMode(mode);
+                          }
+                        },
                       ),
-                    const SizedBox(height: 20),
-                    _slider(
-                      label: '背景模糊',
-                      valueLabel: settings.backgroundBlur.toStringAsFixed(0),
-                      value: settings.backgroundBlur,
-                      min: 0,
-                      max: 30,
-                      enabled: editable,
-                      change: (value) =>
-                          _settings.copyWith(backgroundBlur: value),
-                    ),
-                    _slider(
-                      label: '背景亮度',
-                      valueLabel:
-                          '${(settings.backgroundBrightness * 100).round()}%',
-                      value: settings.backgroundBrightness,
-                      min: 0.5,
-                      max: 1.5,
-                      enabled: editable,
-                      change: (value) =>
-                          _settings.copyWith(backgroundBrightness: value),
-                    ),
-                    _slider(
-                      label: '遮罩强度',
-                      valueLabel:
-                          '${(settings.backgroundOverlay * 100).round()}%',
-                      value: settings.backgroundOverlay,
-                      min: 0,
-                      max: 0.8,
-                      enabled: editable,
-                      change: (value) =>
-                          _settings.copyWith(backgroundOverlay: value),
-                    ),
-                    DropdownButtonFormField<BackgroundFit>(
-                      key: ValueKey(settings.backgroundFit),
-                      initialValue: settings.backgroundFit,
-                      isExpanded: true,
-                      decoration: const InputDecoration(labelText: '背景适配方式'),
-                      items: const [
-                        DropdownMenuItem(
-                          value: BackgroundFit.cover,
-                          child: Text('填充'),
+                    ]),
+                    _section('背景', [
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('自定义背景'),
+                        subtitle: Text(
+                          hasImage
+                              ? (settings.backgroundEnabled ? '已启用' : '已停用')
+                              : '尚未选择图片',
                         ),
-                        DropdownMenuItem(
-                          value: BackgroundFit.contain,
-                          child: Text('适应'),
-                        ),
-                        DropdownMenuItem(
-                          value: BackgroundFit.fill,
-                          child: Text('拉伸'),
-                        ),
-                      ],
-                      onChanged: editable
-                          ? (fit) {
-                              if (fit != null) {
+                        value: settings.backgroundEnabled,
+                        onChanged: hasImage && !_busy
+                            ? (enabled) {
                                 widget.controller.update(
-                                  _settings.copyWith(backgroundFit: fit),
-                                );
-                              }
-                            }
-                          : null,
-                    ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton(
-                        onPressed: editable
-                            ? () {
-                                widget.controller.update(
-                                  _settings.resetBackgroundParameters(),
+                                  _settings.copyWith(
+                                    backgroundEnabled: enabled,
+                                  ),
                                 );
                               }
                             : null,
-                        child: const Text('恢复默认背景设置'),
                       ),
-                    ),
-                  ]),
-                  _saveSection(settings, windows),
-                  _section('界面', [
-                    SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('界面动画'),
-                      subtitle: const Text('减少主题和页面切换动画，保留加载指示'),
-                      value: settings.animationsEnabled,
-                      onChanged: (enabled) {
-                        widget.controller.update(
-                          _settings.copyWith(animationsEnabled: enabled),
-                        );
-                      },
-                    ),
-                  ]),
-                  _aboutSection(),
-                  if (widget.controller.warning != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Column(
-                        children: [
-                          Text(widget.controller.warning!),
-                          TextButton(
-                            onPressed: () {
-                              widget.controller.retrySave();
-                            },
-                            child: const Text('重试保存设置'),
+                      if (hasImage) ...[
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: SizedBox(
+                            height: 140,
+                            child: AppBackground(
+                              settings: settings,
+                              child: const SizedBox.expand(),
+                            ),
                           ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '背景效果预览',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        children: [
+                          FilledButton.tonalIcon(
+                            key: const Key('chooseBackground'),
+                            onPressed: _busy ? null : _choose,
+                            icon: const Icon(
+                              Icons.add_photo_alternate_outlined,
+                            ),
+                            label: Text(hasImage ? '更换图片' : '选择图片'),
+                          ),
+                          if (hasImage)
+                            OutlinedButton.icon(
+                              key: const Key('removeBackground'),
+                              onPressed: _busy ? null : () => _remove(),
+                              icon: const Icon(Icons.delete_outline),
+                              label: const Text('移除背景'),
+                            ),
                         ],
                       ),
+                      if (_busy)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: LinearProgressIndicator(),
+                        ),
+                      const SizedBox(height: 20),
+                      const Text('滑块前段用于清晰细调，后段逐渐增加模糊强度。'),
+                      const SizedBox(height: 12),
+                      _slider(
+                        label: '背景模糊',
+                        sliderKey: const Key('backgroundBlurSlider'),
+                        valueLabel: settings.backgroundBlur.toStringAsFixed(2),
+                        value: BackgroundBlurScale.toPosition(
+                          settings.backgroundBlur,
+                        ),
+                        min: 0,
+                        max: 1,
+                        divisions: 300,
+                        enabled: editable,
+                        change: (value) => _settings.copyWith(
+                          backgroundBlur: BackgroundBlurScale.toBlur(value),
+                        ),
+                      ),
+                      _slider(
+                        label: '背景亮度',
+                        sliderKey: const Key('backgroundBrightnessSlider'),
+                        valueLabel:
+                            '${(settings.backgroundBrightness * 100).round()}%',
+                        value: settings.backgroundBrightness,
+                        min: 0.5,
+                        max: 1.5,
+                        enabled: editable,
+                        change: (value) =>
+                            _settings.copyWith(backgroundBrightness: value),
+                      ),
+                      _slider(
+                        label: '遮罩强度',
+                        sliderKey: const Key('backgroundOverlaySlider'),
+                        valueLabel:
+                            '${(settings.backgroundOverlay * 100).round()}%',
+                        value: settings.backgroundOverlay,
+                        min: 0,
+                        max: 0.8,
+                        enabled: editable,
+                        change: (value) =>
+                            _settings.copyWith(backgroundOverlay: value),
+                      ),
+                      DropdownButtonFormField<BackgroundFit>(
+                        key: ValueKey(settings.backgroundFit),
+                        initialValue: settings.backgroundFit,
+                        isExpanded: true,
+                        decoration: const InputDecoration(labelText: '背景适配方式'),
+                        items: const [
+                          DropdownMenuItem(
+                            value: BackgroundFit.cover,
+                            child: Text('填充'),
+                          ),
+                          DropdownMenuItem(
+                            value: BackgroundFit.contain,
+                            child: Text('适应'),
+                          ),
+                          DropdownMenuItem(
+                            value: BackgroundFit.fill,
+                            child: Text('拉伸'),
+                          ),
+                        ],
+                        onChanged: editable
+                            ? (fit) {
+                                if (fit != null) {
+                                  widget.controller.update(
+                                    _settings.copyWith(backgroundFit: fit),
+                                  );
+                                }
+                              }
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: editable
+                              ? () {
+                                  widget.controller.update(
+                                    _settings.resetBackgroundParameters(),
+                                  );
+                                }
+                              : null,
+                          child: const Text('恢复默认背景设置'),
+                        ),
+                      ),
+                    ]),
+                    _section('卡片外观', [
+                      CardAppearanceControls(
+                        controller: widget.controller,
+                        enabled: !_busy,
+                      ),
+                    ]),
+                    _saveSection(settings, windows),
+                    _section('界面', [
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('界面动画'),
+                        subtitle: const Text('开启主题和页面切换动画；关闭后仍保留加载指示'),
+                        value: settings.animationsEnabled,
+                        onChanged: (enabled) {
+                          widget.controller.update(
+                            _settings.copyWith(animationsEnabled: enabled),
+                          );
+                        },
+                      ),
+                    ]),
+                    _aboutSection(),
+                    if (widget.controller.warning != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Column(
+                          children: [
+                            Text(widget.controller.warning!),
+                            TextButton(
+                              onPressed: () {
+                                widget.controller.retrySave();
+                              },
+                              child: const Text('重试保存设置'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    OutlinedButton(
+                      onPressed: _busy ? null : _resetAll,
+                      child: const Text('恢复默认设置'),
                     ),
-                  OutlinedButton(
-                    onPressed: _busy ? null : _resetAll,
-                    child: const Text('恢复默认设置'),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

@@ -12,11 +12,15 @@ class AppSettings {
     this.themeMode = ThemeMode.system,
     this.backgroundEnabled = false,
     this.backgroundImage,
-    this.backgroundBlur = 10,
+    this.backgroundBlur = 0,
     this.backgroundBrightness = 1,
     this.backgroundOverlay = 0.35,
     this.backgroundFit = BackgroundFit.cover,
     this.animationsEnabled = true,
+    this.cardColor,
+    this.cardOpacity = 1,
+    this.cardBorderColor,
+    this.cardBorderOpacity = 1,
     this.filenameFormat = FilenameFormat.titleBvid,
     this.defaultSaveDirectory,
     this.askSaveLocation = true,
@@ -31,6 +35,10 @@ class AppSettings {
   final double backgroundOverlay;
   final BackgroundFit backgroundFit;
   final bool animationsEnabled;
+  final int? cardColor;
+  final double cardOpacity;
+  final int? cardBorderColor;
+  final double cardBorderOpacity;
   final FilenameFormat filenameFormat;
   final String? defaultSaveDirectory;
   final bool askSaveLocation;
@@ -52,6 +60,12 @@ class AppSettings {
     double? backgroundOverlay,
     BackgroundFit? backgroundFit,
     bool? animationsEnabled,
+    int? cardColor,
+    bool clearCardColor = false,
+    double? cardOpacity,
+    int? cardBorderColor,
+    bool clearCardBorderColor = false,
+    double? cardBorderOpacity,
     FilenameFormat? filenameFormat,
     String? defaultSaveDirectory,
     bool clearSaveDirectory = false,
@@ -65,7 +79,7 @@ class AppSettings {
     backgroundImage: clearBackground
         ? null
         : backgroundImage ?? this.backgroundImage,
-    backgroundBlur: _bounded(backgroundBlur ?? this.backgroundBlur, 0, 30, 10),
+    backgroundBlur: _bounded(backgroundBlur ?? this.backgroundBlur, 0, 30, 0),
     backgroundBrightness: _bounded(
       backgroundBrightness ?? this.backgroundBrightness,
       0.5,
@@ -80,6 +94,17 @@ class AppSettings {
     ),
     backgroundFit: backgroundFit ?? this.backgroundFit,
     animationsEnabled: animationsEnabled ?? this.animationsEnabled,
+    cardColor: clearCardColor ? null : _color(cardColor ?? this.cardColor),
+    cardOpacity: _bounded(cardOpacity ?? this.cardOpacity, 0, 1, 1),
+    cardBorderColor: clearCardBorderColor
+        ? null
+        : _color(cardBorderColor ?? this.cardBorderColor),
+    cardBorderOpacity: _bounded(
+      cardBorderOpacity ?? this.cardBorderOpacity,
+      0,
+      1,
+      1,
+    ),
     filenameFormat: filenameFormat ?? this.filenameFormat,
     defaultSaveDirectory: clearSaveDirectory
         ? null
@@ -90,7 +115,7 @@ class AppSettings {
 
   /// 恢复背景参数，保留背景图片、主题和保存选项。
   AppSettings resetBackgroundParameters() => copyWith(
-    backgroundBlur: 10,
+    backgroundBlur: 0,
     backgroundBrightness: 1,
     backgroundOverlay: 0.35,
     backgroundFit: BackgroundFit.cover,
@@ -106,6 +131,10 @@ class AppSettings {
     'backgroundOverlay': backgroundOverlay,
     'backgroundFit': backgroundFit.name,
     'animationsEnabled': animationsEnabled,
+    'cardColor': cardColor,
+    'cardOpacity': cardOpacity,
+    'cardBorderColor': cardBorderColor,
+    'cardBorderOpacity': cardBorderOpacity,
     'filenameFormat': filenameFormat.name,
     'defaultSaveDirectory': defaultSaveDirectory,
     'askSaveLocation': askSaveLocation,
@@ -118,7 +147,7 @@ class AppSettings {
       themeMode: _enum(json['themeMode'], ThemeMode.values, ThemeMode.system),
       backgroundEnabled: json['backgroundEnabled'] == true && image != null,
       backgroundImage: image,
-      backgroundBlur: _bounded(json['backgroundBlur'], 0, 30, 10),
+      backgroundBlur: _bounded(json['backgroundBlur'], 0, 30, 0),
       backgroundBrightness: _bounded(json['backgroundBrightness'], 0.5, 1.5, 1),
       backgroundOverlay: _bounded(json['backgroundOverlay'], 0, 0.8, 0.35),
       backgroundFit: _enum(
@@ -127,6 +156,10 @@ class AppSettings {
         BackgroundFit.cover,
       ),
       animationsEnabled: _bool(json['animationsEnabled'], true),
+      cardColor: _color(json['cardColor']),
+      cardOpacity: _bounded(json['cardOpacity'], 0, 1, 1),
+      cardBorderColor: _color(json['cardBorderColor']),
+      cardBorderOpacity: _bounded(json['cardBorderOpacity'], 0, 1, 1),
       filenameFormat: _enum(
         json['filenameFormat'],
         FilenameFormat.values,
@@ -146,6 +179,8 @@ class AppSettings {
       choices.where((choice) => choice.name == value).firstOrNull ?? fallback;
   static bool _bool(Object? value, bool fallback) =>
       value is bool ? value : fallback;
+  static int? _color(Object? value) =>
+      value is int && value >= 0 && value <= 0xFFFFFF ? value : null;
   static String? _optionalString(Object? value) =>
       value is String && value.trim().isNotEmpty ? value.trim() : null;
   static double _bounded(

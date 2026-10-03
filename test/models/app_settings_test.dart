@@ -8,7 +8,7 @@ void main() {
     expect(settings.themeMode, ThemeMode.system);
     expect(settings.backgroundEnabled, false);
     expect(settings.backgroundImage, isNull);
-    expect(settings.backgroundBlur, 10);
+    expect(settings.backgroundBlur, 0);
     expect(settings.backgroundBrightness, 1);
     expect(settings.backgroundOverlay, 0.35);
     expect(settings.boxFit, BoxFit.cover);
@@ -27,6 +27,10 @@ void main() {
       backgroundOverlay: 0.6,
       backgroundFit: BackgroundFit.contain,
       animationsEnabled: false,
+      cardColor: 0x123456,
+      cardOpacity: 0.35,
+      cardBorderColor: 0xABCDEF,
+      cardBorderOpacity: 0.4,
       filenameFormat: FilenameFormat.bvidTitle,
       defaultSaveDirectory: 'C:/Pictures',
       askSaveLocation: false,
@@ -47,7 +51,7 @@ void main() {
     expect(settings.themeMode, ThemeMode.dark);
     expect(settings.animationsEnabled, true);
     expect(settings.filenameFormat, FilenameFormat.titleBvid);
-    expect(settings.backgroundBlur, 10);
+    expect(settings.backgroundBlur, 0);
     expect(settings.defaultSaveDirectory, isNull);
     expect(settings.askSaveLocation, false);
   });
@@ -64,7 +68,7 @@ void main() {
       const AppSettings()
           .copyWith(backgroundBlur: double.infinity)
           .backgroundBlur,
-      10,
+      0,
     );
     expect(
       const AppSettings().copyWith(backgroundOverlay: 2).backgroundOverlay,
@@ -78,6 +82,27 @@ void main() {
     });
     expect(settings.backgroundEnabled, false);
     expect(settings.backgroundImage, isNull);
+  });
+  test('旧设置保留默认卡片外观，非法颜色及透明度被校验', () {
+    final old = AppSettings.fromJson({'themeMode': 'dark'});
+    expect(old.cardColor, isNull);
+    expect(old.cardOpacity, 1);
+    final invalid = AppSettings.fromJson({
+      'cardColor': -1,
+      'cardBorderColor': 0x1000000,
+      'cardOpacity': double.nan,
+      'cardBorderOpacity': -3,
+    });
+    expect(invalid.cardColor, isNull);
+    expect(invalid.cardBorderColor, isNull);
+    expect(invalid.cardOpacity, 1);
+    expect(invalid.cardBorderOpacity, 0);
+    final reset = const AppSettings(
+      cardColor: 0x123456,
+      cardOpacity: .5,
+    ).copyWith(clearCardColor: true);
+    expect(reset.cardColor, isNull);
+    expect(reset.cardOpacity, .5);
   });
   test('重置背景参数保留用户图片、主题和保存设置', () {
     final settings = const AppSettings()
@@ -94,7 +119,7 @@ void main() {
     expect(settings.backgroundEnabled, true);
     expect(settings.themeMode, ThemeMode.dark);
     expect(settings.defaultSaveDirectory, 'C:/Pictures');
-    expect(settings.backgroundBlur, 10);
+    expect(settings.backgroundBlur, 0);
     expect(settings.boxFit, BoxFit.cover);
   });
   test('清空背景和目录字段不影响其他设置', () {

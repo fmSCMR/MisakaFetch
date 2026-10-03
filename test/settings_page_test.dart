@@ -1,3 +1,5 @@
+import 'pump_app.dart';
+
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +11,38 @@ import 'package:misaka_fetch/services/background_image_service.dart';
 import 'package:misaka_fetch/services/settings_repository.dart';
 
 void main() {
+  for (final initiallyEnabled in [true, false]) {
+    testWidgets('设置页返回采用最新动画开关：初始 $initiallyEnabled', (tester) async {
+      final controller = SettingsController(
+        repository: SettingsRepository(
+          read: () async => null,
+          write: (_) async {},
+        ),
+        initialSettings: AppSettings(animationsEnabled: initiallyEnabled),
+      );
+      addTearDown(controller.dispose);
+      await pumpExtractionApp(
+        tester,
+        MisakaFetchApp(settingsController: controller),
+      );
+      await tester.tap(find.byKey(const Key('settingsButton')));
+      await tester.pumpAndSettle();
+      await _scrollTo(tester, find.text('界面动画'), 300);
+      await tester.tap(find.widgetWithText(SwitchListTile, '界面动画'));
+      await tester.pumpAndSettle();
+      expect(controller.settings.animationsEnabled, !initiallyEnabled);
+      await tester.pageBack();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 20));
+      expect(
+        find.byType(SettingsPage),
+        initiallyEnabled ? findsNothing : findsOneWidget,
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(SettingsPage), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
   setUp(
     () => PackageInfo.setMockInitialValues(
       appName: 'MisakaFetch',
@@ -34,7 +68,10 @@ void main() {
           ),
         );
         addTearDown(controller.dispose);
-        await tester.pumpWidget(MisakaFetchApp(settingsController: controller));
+        await pumpExtractionApp(
+          tester,
+          MisakaFetchApp(settingsController: controller),
+        );
         expect(
           tester.getSize(find.byKey(const Key('settingsButton'))).shortestSide,
           greaterThanOrEqualTo(48),
@@ -46,6 +83,10 @@ void main() {
         expect(
           tester
               .widgetList<Slider>(find.byType(Slider))
+              .where(
+                (slider) =>
+                    slider.key?.toString().contains('background') ?? false,
+              )
               .every((slider) => slider.onChanged == null),
           isTrue,
         );
@@ -78,7 +119,10 @@ void main() {
       ),
     );
     addTearDown(controller.dispose);
-    await tester.pumpWidget(MisakaFetchApp(settingsController: controller));
+    await pumpExtractionApp(
+      tester,
+      MisakaFetchApp(settingsController: controller),
+    );
     await tester.tap(find.byKey(const Key('settingsButton')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('深色模式'));
@@ -103,7 +147,8 @@ void main() {
       ),
     );
     addTearDown(controller.dispose);
-    await tester.pumpWidget(
+    await pumpExtractionApp(
+      tester,
       MisakaFetchApp(
         settingsController: controller,
         backgroundService: BackgroundImageService(
