@@ -6,7 +6,7 @@
 
 ## 下载
 
-在 [GitHub Releases](https://github.com/gfang6530-gif/MisakaFetch/releases) 下载对应安装包：
+在 [GitHub Releases](https://github.com/fmSCMR/MisakaFetch/releases) 下载对应安装包：
 
 - Windows：`MisakaFetch-V1.1.0-Windows-x64.zip`
 - Android：`MisakaFetch-V1.1.0.apk`
@@ -75,6 +75,6 @@ Bilibili 接口可能变化或限流，封面清晰度取决于返回的原图�
 
 ## 反馈与许可证
 
-问题和建议请提交到 [Issues](https://github.com/gfang6530-gif/MisakaFetch/issues)。
+问题和建议请提交到 [Issues](https://github.com/fmSCMR/MisakaFetch/issues)。
 
 代码采用 [MIT License](LICENSE)，第三方依赖见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。封面权利归原权利人，代码许可证不授予封面的使用权。本项目与 Bilibili 无官方关联。

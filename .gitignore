@@ -56,3 +56,9 @@ key.properties
 
 # Generated workspace launcher.
 /MisakaFetch.exe
+
+# Local runtime data and release staging.
+user_data/
+misakafetch.keep-settings
+/android/.kotlin/
+/releases/
